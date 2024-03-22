@@ -31,10 +31,29 @@ simple_bayes <- function(source1, source2){
 
 
 
-simple_bayes_beta_binomial <- function(source1, source2, inverse_temperature=1, lower_bound = 1, upper_bound = 8){
+simple_bayes_beta_binomial <- function(source1, source2, inverse_temperature=1, lower_bound=1, upper_bound= 8){
   n_rows = length(source1)
   # calculate alpha for beta distribution
   alpha <- inverse_temperature * (source1 + source2 - 2 * lower_bound)
+  
+  # calculating beta for the beta distribution
+  beta <- inverse_temperature * (2 * (upper_bound - lower_bound)) - alpha
+  
+  # sample from a beta distribution
+  belief <- rbeta(n_rows, alpha, beta)
+  
+  # predict the rating
+  second_rating <- lower_bound + rbinom(n_rows, upper_bound - lower_bound, belief)
+
+  return(second_rating)
+}
+
+weighted_bayes_beta_binomial <- function(source1, source2, weight1, weight2, inverse_temperature=1, lower_bound=1, upper_bound= 8){
+  n_rows = length(source1)
+  # calculate alpha for beta distribution
+
+  # NOTE: check course notes, riccardo does something where he scales the weights??
+  alpha <- inverse_temperature * (weight1 * source1 + weight2 * source2 - 2 * lower_bound)
   
   # calculating beta for the beta distribution
   beta <- inverse_temperature * (2 * (upper_bound - lower_bound)) - alpha
@@ -64,7 +83,8 @@ simple_bayes_beta_binomial <- function(source1, source2, inverse_temperature=1, 
 
 source1 <- seq(1, 8, 1)
 source2 <- seq(1, 8, 1)
-n_trials <- seq(1, 2, 1)
+n_trials <- seq(1, 100, 1)
+
 
 df <- expand.grid("trials" = n_trials, "source1" = source1, "source2" = source2)
 df$belief <- simple_bayes(convert_ratings(df$source1), convert_ratings(df$source2))
@@ -85,7 +105,7 @@ df$second_rating_beta_binomial <- simple_bayes_beta_binomial(df$source1, df$sour
 ```{r}
 data <- read_csv("data/Simonsen_clean.csv")
 
-# data from only one paricp
+# data from only one partipant for testing
 one_participant <- data |>
   filter(ID == sample(unique(ID), 1))
 ```
@@ -103,6 +123,18 @@ fit <- simple_betabayes$sample(data = list(N = nrow(one_participant),
 ```
 
 ```{r}
-print(fit)
+
+fit$summary()
+fit$cmdstan_diagnose()
+fit$loo()
 ```
+
+```{r}
+draws_df <- as_draws_df(fit$draws())
+
+ggplot(draws_df, aes(.iteration, invtemp, group = .chain, color = .chain)) +
+  geom_line(alpha = 0.5) +
+  theme_classic()
+```
+
 
