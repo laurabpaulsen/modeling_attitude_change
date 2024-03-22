@@ -1,0 +1,90 @@
+---
+title: "simple_bayes"
+author: "Laura Bock Paulsen"
+date: "2024-03-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+pacman::p_load(tidyverse,
+        here,
+        posterior,
+        cmdstanr,
+        brms, tidybayes)
+
+```
+
+
+```{r}
+# maybe think about changing this to account better for the fact that these ratings are going to be used on the logit scale, which makes the distance between each rating unpropropotional
+convert_ratings <- function(value, max_val=8){
+  return((value) /(max_val+1))
+}
+
+simple_bayes <- function(source1, source2){
+  belief <- inv_logit_scaled(0.5*logit_scaled(source1) + 0.5*logit_scaled(source2)) # 0.5 to get the average between the two sources 
+  
+  return(belief)
+}
+
+
+
+simple_bayes_beta_binomial <- function(source1, source2, inverse_temperature=1, lower_bound = 1, upper_bound = 8){
+  n_rows = length(source1)
+  # calculate alpha for beta distribution
+  alpha <- inverse_temperature * (source1 + source2 - 2 * lower_bound)
+  
+  # calculating beta for the beta distribution
+  beta <- inverse_temperature * (2 * (upper_bound - lower_bound)) - alpha
+  
+  # sample from a beta distribution
+  belief <- rbeta(n_rows, alpha, beta)
+  
+  # predict the rating
+  second_rating <- lower_bound + rbinom(n_rows, upper_bound - lower_bound, belief)
+
+  return(second_rating)
+}
+?rbeta
+```
+
+
+```{r}
+# turning the belief into a choice that is either 1, 2, 3, 4, 5, 6, 7, 8
+
+## SUGGESTIONS ##
+# ordered regression stan user guide
+# logit of belief between zero and one and model it as a normal distribution
+    # MAKE SURE TO CHECK WHAT HAPPENS WHEN LOGIT TRANSFORMING the numbers coming out of the simple bayes
+  # maybe change the ratings
+  # implicitly modelling it as trying to decide whether the face is trustworthy or not
+    # that is source1 = 6, source2 = 6 will lead to a score of maybe 7 
+# modelling it as a binomial with 8 tries
+
+source1 <- seq(1, 8, 1)
+source2 <- seq(1, 8, 1)
+n_trials <- seq(1, 2, 1)
+
+df <- expand.grid("trials" = n_trials, "source1" = source1, "source2" = source2)
+df$belief <- simple_bayes(convert_ratings(df$source1), convert_ratings(df$source2))
+
+# LOGIT IMPLEMENTATION
+df$second_rating <- round(df$belief * 10-1)
+
+# is this to hacky???
+df$second_rating <- ifelse(df$second_rating < 1, 1, 
+                           ifelse(df$second_rating > 8, 8, df$second_rating))
+
+
+# BETA BINOMIAL IMPLEMENTATION
+df$second_rating_beta_binomial <- simple_bayes_beta_binomial(df$source1, df$source2)
+```
+
+
+
+```{r}
+
+```
+
