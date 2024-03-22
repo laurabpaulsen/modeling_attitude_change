@@ -1,65 +1,94 @@
 data {
-  int<lower=0> N; // number of trials
+  int<lower = 0> N; // number of trials
+  int<lower = 0> N_subj; //number of subjects
   int<lower = 0> lower_bound;
   int<lower = lower_bound + 1> upper_bound;
-  vector<lower = lower_bound, upper = upper_bound>[N] first_rating;
-  vector<lower = lower_bound, upper = upper_bound>[N] group_rating;
-  array[N] int<lower = lower_bound, upper = upper_bound> second_rating;
-  
-
+  array[N, N_subj] int<lower = lower_bound, upper = upper_bound> first_rating;
+  array[N, N_subj] int<lower = lower_bound, upper = upper_bound> group_rating;
+  array[N, N_subj] int<lower = lower_bound, upper = upper_bound> second_rating;
 }
 
 
 
 transformed data {
-  vector[N] alpha;
-  vector[N] beta;
+  array[N_subj] vector[N] alpha;
+  array[N_subj] vector[N]  beta;
   
-  array[N] int second_rating_tr;
+  array[N, N_subj] int<lower = lower_bound-1, upper = upper_bound-1> second_rating_tr;
   
-  // preparing vectors with the shape for the beta distribution
-  alpha = first_rating + group_rating - 2 * lower_bound; // the rating (how many...)
-  beta = rep_vector(2*(upper_bound - lower_bound), N);             // out of how many (trials)
-  
-  // subtracting the lower bound from the second rating WHY???
-  for(i in 1:N){
-    second_rating_tr[i] = second_rating[i] - lower_bound;
+  for(subj in 1:N_subj){
+    // preparing vectors with the shape for the beta distribution for each participant
+    alpha[subj] = to_vector(first_rating[:, subj]) + to_vector(group_rating[:, subj]) - 2 * lower_bound; // the rating (how many...)
+    beta[subj] = rep_vector(2*(upper_bound - lower_bound), N);             // out of how many (trials)
+    
+      // subtracting the lower bound from the second rating WHY???
+    for(i in 1:N){
+      second_rating_tr[i, subj] = second_rating[i, subj] - lower_bound;
+    }
   }
+
 }
 
 parameters {
-  real loginvtemp;
+  // group level hyperparameters 
+  real mu_loginvtemp;
+  real sd_loginvtemp;
+  
+  // subject level parameters
+  array[N_subj] real loginvtemp;
 }
 
 transformed parameters {
   // constraining inverse temperature to be above 0
-  real<lower=0> invtemp = exp(loginvtemp); 
+  array[N_subj] real<lower=0> invtemp;
+  
+  for (subj in 1:N_subj){
+  invtemp[subj] = exp(mu_loginvtemp + sd_loginvtemp * loginvtemp[subj]); 
+  }
 }
 
 
 model {
-  vector[N] belief;
   
-  loginvtemp ~normal(0, 1);
+  // group-level parameters
+  mu_loginvtemp ~ normal(0, 1);
+  sd_loginvtemp ~ normal(0, 0.2);
+  
+  // subject-level parameters
+  loginvtemp ~ normal(0, 1.0);
   
   
-  // implementation here does not work atm
-  //belief ~ beta(1 + alpha * invtemp, 1 + (beta - alpha) * invtemp);
-  //second_rating_tr ~ binomial(rep_array(upper_bound - lower_bound, N), belief);
-  
-  // note there is also a beta_binomial function in STAN -> maybe implement using this instead?
-  second_rating_tr ~ beta_binomial(rep_array(upper_bound - lower_bound, N), 1 + alpha * invtemp, 1 + (beta - alpha) * invtemp);
-  
+  // looping over subjects and using the beta_binomial to predict the rating
+  for(subj in 1:N_subj){
+    second_rating_tr[:, subj] ~ beta_binomial(rep_array(upper_bound - lower_bound, N), 1 + alpha[subj] * invtemp[subj], 1 + (beta[subj] - alpha[subj]) * invtemp[subj]);
+  }
   
 }
 
 generated quantities {
+  // priors
+  real prior_invtemp;
+  prior_invtemp = exp(normal_rng(0, 1)); // FIX: DO WE ALSO NEED TO INCLUDE THE SUBJECT LEVEL PRIOR IN SOME WAY?
+  
+  // posterior
+  real posterior_invtemp;
+  posterior_invtemp = inv_logit(mu_loginvtemp);
+  
+  
+  
   // for model comparison
-  array[N] real log_lik;
-
-  for (n in 1:N){  
-    log_lik[n] =  beta_binomial_lpmf(second_rating_tr | (upper_bound - lower_bound), 1 + alpha[n] * invtemp, 1 + (beta[n] - alpha[n]) * invtemp);
+  array[N, N_subj] real log_lik;
+  
+  
+  // FIX: REMEBER TO INCLUDE THE GROUP LEVEL HERE AS WELL!!!!!
+  for (subj in 1:N_subj){
+    for (n in 1:N){  
+      log_lik[n, subj] =  beta_binomial_lpmf(second_rating_tr[:, subj] | (upper_bound - lower_bound), 1 + alpha[subj, n] * invtemp[subj], 1 + (beta[subj, n] - alpha[subj, n]) * invtemp[subj]);
+    }
   }
+  
+  
 
+  
 }
 
