@@ -42,6 +42,8 @@ model {
   
   loginvtemp ~normal(0, 1);
   
+  
+  // implementation here does not work atm
   //belief ~ beta(1 + alpha * invtemp, 1 + (beta - alpha) * invtemp);
   //second_rating_tr ~ binomial(rep_array(upper_bound - lower_bound, N), belief);
   
