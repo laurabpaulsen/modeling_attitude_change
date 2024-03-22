@@ -47,7 +47,6 @@ simple_bayes_beta_binomial <- function(source1, source2, inverse_temperature=1, 
 
   return(second_rating)
 }
-?rbeta
 ```
 
 
@@ -83,8 +82,27 @@ df$second_rating_beta_binomial <- simple_bayes_beta_binomial(df$source1, df$sour
 ```
 
 
+```{r}
+data <- read_csv("data/Simonsen_clean.csv")
+
+# data from only one paricp
+one_participant <- data |>
+  filter(ID == sample(unique(ID), 1))
+```
+
+
 
 ```{r}
+simple_betabayes <- cmdstan_model("simple_bayes_betabinomial.stan")
+fit <- simple_betabayes$sample(data = list(N = nrow(one_participant),
+                                           lower_bound = 1,
+                                           upper_bound = 8,
+                                           first_rating = one_participant$FirstRating,
+                                           group_rating = one_participant$GroupRating,
+                                           second_rating = one_participant$SecondRating))
+```
 
+```{r}
+print(fit)
 ```
 
