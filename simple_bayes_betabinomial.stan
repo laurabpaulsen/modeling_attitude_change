@@ -55,8 +55,11 @@ model {
 
 generated quantities {
   // for model comparison
-  real log_lik;
-  log_lik = beta_binomial_lpmf(second_rating_tr | rep_array(upper_bound - lower_bound, N), 1 + alpha * invtemp, 1 + (beta - alpha) * invtemp);
+  array[N] real log_lik;
+
+  for (n in 1:N){  
+    log_lik[n] =  beta_binomial_lpmf(second_rating_tr | (upper_bound - lower_bound), 1 + alpha[n] * invtemp, 1 + (beta[n] - alpha[n]) * invtemp);
+  }
 
 }
 
