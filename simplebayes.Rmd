@@ -68,9 +68,9 @@ df$second_rating_beta_binomial <- simple_bayes_beta_binomial(df$source1, df$sour
 ```{r}
 data <- read_csv("data/Simonsen_clean.csv")
 
-# data from only one partipant for testing
+# data from fewer participants for testing
 data <- data |>
-  filter(ID == sample(unique(ID), 1))
+  filter(ID == sample(unique(ID), 3))
 
 # make a matrices with shape n_trials and n_subjects for first rating, group rating and second rating
 unique_subjects <- unique(data$ID)
@@ -97,7 +97,7 @@ for (i in 1:length(unique_subjects)) {
 
 
 ```{r}
-simple_betabayes <- cmdstan_model("simple_bayes_betabinomial.stan")
+simple_betabayes <- cmdstan_model("mdls/simple_bayes_betabinomial.stan")
 
 fit_simple <- simple_betabayes$sample(
   data = list(N = n_trials,
