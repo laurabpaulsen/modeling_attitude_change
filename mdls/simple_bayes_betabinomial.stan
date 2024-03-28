@@ -21,7 +21,9 @@ transformed data {
     alpha[subj] = to_vector(first_rating[:, subj]) + to_vector(group_rating[:, subj]) - 2 * lower_bound; // the rating (how many...)
     beta[subj] = rep_vector(2*(upper_bound - lower_bound), N);             // out of how many (trials)
     
-      // subtracting the lower bound from the second rating WHY???
+    // subtracting the lower bound from the second rating
+    // as we want binomial(...) = 0 to correspond to the lowest rating option
+    
     for(i in 1:N){
       second_rating_tr[i, subj] = second_rating[i, subj] - lower_bound;
     }
@@ -43,7 +45,7 @@ transformed parameters {
   array[N_subj] real<lower=0> invtemp;
   
   for (subj in 1:N_subj){
-  invtemp[subj] = exp(mu_loginvtemp + sd_loginvtemp * loginvtemp[subj]); 
+    invtemp[subj] = exp(mu_loginvtemp + sd_loginvtemp * loginvtemp[subj]); 
   }
 }
 
@@ -55,14 +57,13 @@ model {
   sd_loginvtemp ~ normal(0, 0.2);
   
   // subject-level parameters
-  loginvtemp ~ normal(0, 1.0);
+  loginvtemp ~ normal(0, 1);
   
   
   // looping over subjects and using the beta_binomial to predict the rating
   for(subj in 1:N_subj){
     second_rating_tr[:, subj] ~ beta_binomial(rep_array(upper_bound - lower_bound, N), 1 + alpha[subj] * invtemp[subj], 1 + (beta[subj] - alpha[subj]) * invtemp[subj]);
   }
-  
 }
 
 generated quantities {
@@ -77,18 +78,15 @@ generated quantities {
   
   
   // for model comparison
-  array[N, N_subj] real log_lik;
+  array[N_subj] real log_lik;
   
-  
-  // FIX: REMEBER TO INCLUDE THE GROUP LEVEL HERE AS WELL!!!!!
   for (subj in 1:N_subj){
+    log_lik[subj] = 0;
+    
+    // loop over trials for each particpant
     for (n in 1:N){  
-      log_lik[n, subj] =  beta_binomial_lpmf(second_rating_tr[:, subj] | (upper_bound - lower_bound), 1 + alpha[subj, n] * invtemp[subj], 1 + (beta[subj, n] - alpha[subj, n]) * invtemp[subj]);
+      log_lik[subj] +=  beta_binomial_lpmf(second_rating_tr[:, subj] | (upper_bound - lower_bound), 1 + alpha[subj, n] * invtemp[subj], 1 + (beta[subj, n] - alpha[subj, n]) * invtemp[subj]);
     }
   }
-  
-  
-
-  
 }
 
