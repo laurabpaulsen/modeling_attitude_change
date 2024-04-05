@@ -39,7 +39,10 @@ fit <- simple_betabayes$sample(
               first_rating = first_rating_matrix,
               group_rating = group_rating_matrix,
               second_rating = second_rating_matrix
-  )
+  ),
+  chains = 4,
+  thin = 2,
+  iter_warmup = 1000
 )
 
 # save the posterior
