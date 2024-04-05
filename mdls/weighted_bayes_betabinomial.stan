@@ -91,7 +91,6 @@ generated quantities {
       log_lik[subj] +=  beta_binomial_lpmf(second_rating_tr[:, subj] | // INSERT SOMETHING HERE!!);
     }
   }
-}
 
 
   
