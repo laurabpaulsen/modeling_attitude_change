@@ -2,3 +2,8 @@
 .Rhistory
 data/*
 .DS_Store
+fits/*
+
+## ingore all files in the models directory to get rid of cached models (except for the .stan files themselves) 
+mdls
+!*.stan
