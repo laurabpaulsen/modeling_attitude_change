@@ -33,19 +33,19 @@ transformed data {
 
 parameters {
   // group level hyperparameters 
-  real mu_loginvtemp;
-  real sd_loginvtemp;
+  real mu_logbias;
+  real sd_logbias;
   
   // subject level parameters
-  array[N_subj] real loginvtemp;
+  array[N_subj] real logbias;
 }
 
 transformed parameters {
   // constraining inverse temperature to be above 0
-  array[N_subj] real<lower=0> invtemp;
+  array[N_subj] real<lower=0> bias;
   
   for (subj in 1:N_subj){
-    invtemp[subj] = exp(mu_loginvtemp + sd_loginvtemp * loginvtemp[subj]); 
+    bias[subj] = inv_logit(mu_logbias + sd_logbias * logbias[subj]); 
   }
 }
 
@@ -53,28 +53,29 @@ transformed parameters {
 model {
   
   // group-level parameters
-  mu_loginvtemp ~ normal(0, 1);
-  sd_loginvtemp ~ normal(0, 0.2);
+  mu_logbias ~ normal(0, 1);
+  sd_logbias ~ normal(0, 0.2);
   
   // subject-level parameters
-  loginvtemp ~ normal(0, 1);
+  logbias ~ normal(0, 1);
   
   
   // looping over subjects and using the beta_binomial to predict the rating
   for(subj in 1:N_subj){
-    second_rating_tr[:, subj] ~ beta_binomial(rep_array(upper_bound - lower_bound, N), 1 + alpha[subj] * invtemp[subj], 1 + (beta[subj] - alpha[subj]) * invtemp[subj]);
+    second_rating_tr[:, subj] ~ beta_binomial(rep_array(upper_bound - lower_bound, N), 1 + alpha[subj] * bias[subj], 1 + (beta[subj] - alpha[subj]) * bias[subj]);
   }
 }
 
 generated quantities {
   // priors
-  real prior_invtemp;
-  prior_invtemp = exp(normal_rng(0, 1)); // FIX: DO WE ALSO NEED TO INCLUDE THE SUBJECT LEVEL PRIOR IN SOME WAY?
-  
+  real prior_bias;
+  //                    grouplvl mu        grouplvl sd          subj lvl param
+  prior_bias = inv_logit(normal_rng(0, 1) + normal_rng(0, 0.2) * normal_rng(0, 1));
+
+
   // posterior
-  real posterior_invtemp;
-  posterior_invtemp = inv_logit(mu_loginvtemp);
-  
+  real posterior_bias;
+  posterior_bias = inv_logit(mu_logbias);
   
   
   // for model comparison
@@ -85,7 +86,7 @@ generated quantities {
     
     // loop over trials for each particpant
     for (n in 1:N){  
-      log_lik[subj] +=  beta_binomial_lpmf(second_rating_tr[:, subj] | (upper_bound - lower_bound), 1 + alpha[subj, n] * invtemp[subj], 1 + (beta[subj, n] - alpha[subj, n]) * invtemp[subj]);
+      log_lik[subj] +=  beta_binomial_lpmf(second_rating_tr[:, subj] | (upper_bound - lower_bound), 1 + alpha[subj, n] * bias[subj], 1 + (beta[subj, n] - alpha[subj, n]) * bias[subj]);
     }
   }
 }

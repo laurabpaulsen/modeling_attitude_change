@@ -1,12 +1,13 @@
 # This script runs the simple bayes model on the data from 
 # Simonsen et al and saves the output
 
+pacman::p_load(cmdstanr, tidyverse)
 
 data <- read_csv("data/Simonsen_clean.csv")
 
 # REMEMBER TO DELETE TO RUN ON ALL PARTICPANTS # data from fewer participants for testing 
-data <- data |>
-  filter(ID == sample(unique(ID), 3))
+#data <- data |>
+#  filter(ID == sample(unique(ID), 3))
 
 # make a matrices with shape n_trials and n_subjects for first rating, group rating and second rating
 unique_subjects <- unique(data$ID)
@@ -30,7 +31,7 @@ for (i in 1:length(unique_subjects)) {
 
 simple_betabayes <- cmdstan_model("mdls/simple_bayes_betabinomial.stan")
 
-fit_simple <- simple_betabayes$sample(
+fit <- simple_betabayes$sample(
   data = list(N = n_trials,
               N_subj = n_subjects,
               lower_bound = 1,
@@ -41,4 +42,5 @@ fit_simple <- simple_betabayes$sample(
   )
 )
 
-# FIGURE OUT HOW TO SAVE THE FIT!!!
+# save the posterior
+fit$save_object(file = "fits/simple_bayes_data.RData")

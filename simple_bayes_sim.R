@@ -9,12 +9,11 @@ source("helper_functions.R")
 pacman::p_load(cmdstanr)
 
 
-for(invtemp_mu in c(0.5, 1, 3)){
+for(bias_mu in c(0.25, 0.5, 0.75)){
 
-  # sample the inverse temperature
-  invtemp_sd <- 0.05
+  # parameters
   n_trials <- 100
-  n_subjects <- 20
+  n_subjects <- 40
   
   # matrices used for saving the data
   first_rating_matrix <- matrix(NA, nrow = n_trials, ncol = n_subjects)
@@ -22,16 +21,29 @@ for(invtemp_mu in c(0.5, 1, 3)){
   second_rating_matrix <- matrix(NA, nrow = n_trials, ncol = n_subjects)
   
   for(i in 1:n_subjects){
-    invtemp_subj <- rnorm(1, invtemp_mu, invtemp_sd)
+    # subject level difference from the group mean bias
+    subj_diff <- rnorm(1, 0, 0.01)
+
+    # subejct level bias
+    bias_subj <- bias_mu + subj_diff
+
+    # check that bias is below 1 and above 0
+    if(bias_subj > 1){
+      bias_subj <- 0.99
+    }
+    if(bias_subj < 0){
+      bias_subj <- 0.01
+    }
     
     # generate responses for first rating and the group level
     first_rating <-  as.integer(runif(n_trials, min = 1, max = 8))
     group_rating <-  as.integer(runif(n_trials, min = 1, max = 8))
-    
+
+
     # generate second rating
     second_rating <- simple_bayes_beta_binomial(
       first_rating, group_rating, 
-      inverse_temperature = invtemp_subj, 
+      bias = bias_subj, 
       lower_bound=1, upper_bound = 8
     )
     
@@ -55,5 +67,5 @@ for(invtemp_mu in c(0.5, 1, 3)){
     )
   )
   # save the posterior
-  fit$save_object(file = paste0("fits/simple_bayes_sim_", invtemp_mu, ".RData"))
+  fit$save_object(file = paste0("fits/simple_bayes_sim_", bias_mu, ".RData"))
 }
