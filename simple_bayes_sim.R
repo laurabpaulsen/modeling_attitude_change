@@ -6,11 +6,12 @@
 # loading function from helper functions
 source("helper_functions.R")
 
+pacman::p_load(cmdstanr)
 
-for(invtemp_mu in c(0.25, 0.5, 0.75)){
+
+for(invtemp_mu in c(0.5, 1, 3)){
 
   # sample the inverse temperature
-  invtemp_mu <-  0.5
   invtemp_sd <- 0.05
   n_trials <- 100
   n_subjects <- 20
@@ -40,11 +41,10 @@ for(invtemp_mu in c(0.25, 0.5, 0.75)){
     second_rating_matrix[, i] <- second_rating
   }
   
-  
   # fit model
   simple_betabayes <- cmdstan_model("mdls/simple_bayes_betabinomial.stan")
   
-  fit_simple_sim <- simple_betabayes$sample(
+  fit <- simple_betabayes$sample(
     data = list(N = n_trials,
                 N_subj = n_subjects,
                 lower_bound = 1,
@@ -54,10 +54,6 @@ for(invtemp_mu in c(0.25, 0.5, 0.75)){
                 second_rating = second_rating_matrix
     )
   )
-
-  # SAVE THE POSTERIOR SOMEHOW
+  # save the posterior
+  fit$save_object(file = paste0("fits/simple_bayes_sim_", invtemp_mu, ".RData"))
 }
-
-
-
-# ADD PLOTTING OF THE POSTERIORS AND TRUE VALUES
