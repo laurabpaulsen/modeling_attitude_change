@@ -41,9 +41,9 @@ fit <- readRDS(file_name)
 # extract the posterior
 posterior <- fit$draws()
 
-fit_df <- as_draws_df(posterior)
+draws_df <- as_draws_df(posterior)
 
-ggplot(fit_df) +
+ggplot(draws_df) +
 # plot the prior density
 geom_density(aes(x = prior_bias), fill = "skyblue", alpha = 0.5) +
 # plot the posterior density
@@ -59,3 +59,11 @@ theme_bw()
 
 # save the plot
 ggsave("fig/simple_bayes_data.png", create.dir = TRUE)
+
+# make trace plots for data
+ggplot(draws_df, aes(.iteration, posterior_bias, group = .chain, color = .chain)) +
+  geom_line() +
+  theme_bw()
+
+# save the plot
+ggsave("fig/simple_bayes_data_trace.png", create.dir = TRUE, width = 10, height = 5)
