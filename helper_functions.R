@@ -1,9 +1,9 @@
 simple_bayes_beta_binomial <- function(source1, source2, bias, lower_bound=1, upper_bound=8){
   n_rows = length(source1)
-  # calculate alpha for beta distribution
+  # calculate alpha for beta distribution (how many)
   alpha <- source1 + source2 - 2 * lower_bound
   
-  # calculating beta for the beta distribution
+  # calculating beta for the beta distribution (out of how many)
   beta <- 2 * (upper_bound - lower_bound)
   
   # sample from a beta distribution
