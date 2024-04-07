@@ -79,14 +79,13 @@ generated quantities {
   
   
   // for model comparison
-  array[N_subj] real log_lik;
+  array[N_subj, N] real log_lik;
   
   for (subj in 1:N_subj){
-    log_lik[subj] = 0;
     
     // loop over trials for each particpant
     for (n in 1:N){  
-      log_lik[subj] +=  beta_binomial_lpmf(second_rating_tr[:, subj] | (upper_bound - lower_bound), 1 + alpha[subj, n] * bias[subj], 1 + (beta[subj, n] - alpha[subj, n]) * bias[subj]);
+      log_lik[subj, n] =  beta_binomial_lpmf(second_rating_tr[n, subj] | (upper_bound - lower_bound), 1 + alpha[subj, n] * bias[subj], 1 + (beta[subj, n] - alpha[subj, n]) * bias[subj]);
     }
   }
 }
