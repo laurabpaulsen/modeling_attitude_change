@@ -67,3 +67,8 @@ ggplot(draws_df, aes(.iteration, posterior_bias, group = .chain, color = .chain)
 
 # save the plot
 ggsave("fig/simple_bayes_data_trace.png", create.dir = TRUE, width = 10, height = 5)
+
+png("fig/simple_bayes_data_PSIS.png", width = 800, height = 400)
+# print log likelihood
+loo <- fit$loo(save_psis = TRUE, cores = 4)
+plot(loo)
