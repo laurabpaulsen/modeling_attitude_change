@@ -98,7 +98,7 @@ generated quantities {
     
     // loop over trials for each particpant
     for (n in 1:N){  
-      log_lik[subj, n] =  beta_binomial_lpmf(second_rating_tr[n, subj] | (upper_bound - lower_bound), 1 + shape1, 1 + (shape2 - shape1));
+      log_lik[subj, n] =  beta_binomial_lpmf(second_rating_tr[n, subj] | (upper_bound - lower_bound), 1 + shape1[n], 1 + (shape2[n] - shape1[n]));
       }
   }
 }
