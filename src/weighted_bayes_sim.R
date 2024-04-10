@@ -1,7 +1,6 @@
 ## This script simulates data for three groups of agents with an 
-## inverse temperature of 0.25, 0.5 and 0.75.
+## weight1 of 0.5, 1 and 1.5
 ## The group level posterior is plotted and the true value
-
 
 # loading function from helper functions
 source("helper_functions.R")
@@ -15,7 +14,7 @@ for(weight1 in c(0.5, 1, 1.5)){
   # weight1 + weight2 = 2
 
   # parameters
-  n_trials <- 100
+  n_trials <- 153
   n_subjects <- 40
     
   # matrices used for saving the data

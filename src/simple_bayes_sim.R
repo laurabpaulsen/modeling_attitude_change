@@ -12,7 +12,7 @@ pacman::p_load(cmdstanr)
 for(bias_mu in c(0.25, 0.5, 0.75)){
 
   # parameters
-  n_trials <- 100
+  n_trials <- 153
   n_subjects <- 40
   
   # matrices used for saving the data
