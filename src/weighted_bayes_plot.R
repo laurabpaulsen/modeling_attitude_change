@@ -20,7 +20,7 @@ for(i in weight){
     # plot the posterior density
     geom_density(aes(x = posterior_weight), fill = "red", alpha = 0.5) +
     
-    labs(title = paste0("Prior and posterior density for bias = ", i),
+    labs(title = paste0("Prior and posterior density for weight1 = ", i),
            x = "Weight1",
            y = "Density") +
 
