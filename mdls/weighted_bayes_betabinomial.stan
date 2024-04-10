@@ -23,6 +23,7 @@ transformed data {
     
     // subtracting the lower bound from the second rating
     // as we want binomial(...) = 0 to correspond to the lowest rating option
+    
     for(i in 1:N){
       second_rating_tr[i, subj] = second_rating[i, subj] - lower_bound;
     }
@@ -35,24 +36,19 @@ parameters {
   real mu_logweight1;
   real sd_logweight1;
   
-  real mu_logweight2;
-  real sd_logweight2;
-  
   // subject level parameters
   array[N_subj] real logweight1;
-  array[N_subj] real logweight2;
+
 }
 
 transformed parameters {
+  // constraining the weight to be between 0 and 1
+  array[N_subj] real<lower=0> weight1;
+  array[N_subj] real<lower=0> weight2;
   
-  //subject level constrained parameters for each weight between 0 an 1
-  array[N_subj] real<lower=0, upper> weight1;
-  array[N_subj ]real<lower=0, upper> weight2;
-  
-  // constraining weights to be between 0 and 1
   for (subj in 1:N_subj){
-    weight1[subj] = inv_logit(mu_logweight1 + sd_logweight1 * logweight1[subj]); 
-    weight2[subj] = inv_logit(mu_logweight2 + sd_logweight2 * logweight2[subj]); 
+    weight1[subj] = inv_logit(mu_logweight1 + sd_logweight1 * logweight1[subj])*2; 
+    weight2[subj] = 2 - weight1[subj];
   }
 }
 
@@ -62,43 +58,48 @@ model {
   mu_logweight1 ~ normal(0, 1);
   sd_logweight1 ~ normal(0, 0.2);
   
-  mu_logweight2 ~ normal(0, 1);
-  sd_logweight2 ~ normal(0, 0.2);
-  
   // subject-level parameters
   logweight1 ~ normal(0, 1);
-  logweight1 ~ normal(0, 1);
-  
+
+  vector[N] shape1;
+  vector[N] shape2;
+    
   // looping over subjects and using the beta_binomial to predict the rating
   for(subj in 1:N_subj){
-    second_rating_tr[:, subj] ~ beta_binomial(rep_array(upper_bound - lower_bound, N), // INSERT SOMETHING HERE!!!!);
+    shape1 = weight1[subj] * to_vector(first_rating[:, subj]) + weight2[subj] * to_vector(group_rating[:, subj]) - 2 * lower_bound;
+    shape2 = rep_vector(2 * (upper_bound - lower_bound), N);
+
+    second_rating_tr[:, subj] ~ beta_binomial(rep_array(upper_bound - lower_bound, N), 1 + shape1, 1 + (shape2 - shape1));
   }
-  
 }
 
 generated quantities {
-  // for model comparison
-  array[N] real log_lik;
+  // priors
+  real prior_weight;
+  //                       grouplvl mu        grouplvl sd          subj lvl param
+  prior_weight = inv_logit(normal_rng(0, 1) + normal_rng(0, 0.2) * normal_rng(0, 1))*2;
+
+
+  // posterior
+  real posterior_weight;
+  posterior_weight = inv_logit(mu_logweight1)*2;
   
-   // for model comparison
-  array[N_subj] real log_lik;
+  
+  // for model comparison
+  array[N_subj, N] real log_lik;
+  vector[N] shape1;
+  vector[N] shape2;
   
   for (subj in 1:N_subj){
-    log_lik[subj] = 0;
+
+    shape1 = weight1[subj] * to_vector(first_rating[:, subj]) + weight2[subj] * to_vector(group_rating[:, subj]) - 2 * lower_bound;
+    shape2 = rep_vector(2 * (upper_bound - lower_bound), N);
+
     
     // loop over trials for each particpant
     for (n in 1:N){  
-      log_lik[subj] +=  beta_binomial_lpmf(second_rating_tr[:, subj] | // INSERT SOMETHING HERE!!);
-    }
+      log_lik[subj, n] =  beta_binomial_lpmf(second_rating_tr[n, subj] | (upper_bound - lower_bound), 1 + shape1, 1 + (shape2 - shape1));
+      }
   }
-
-
-  
-  // priors
-  prior_invtmp real;
-  // generate here
-  
-  prior_weights real; // same for weight one and two so enough to generate one
-  // generate here
 }
 
