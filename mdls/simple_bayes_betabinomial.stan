@@ -91,5 +91,8 @@ generated quantities {
 
   real group_log_lik_mean;
   group_log_lik_mean = mean(to_matrix(log_lik));
+
+  real group_log_lik_sum;
+  group_log_lik_sum = sum(to_matrix(log_lik));
 }
 

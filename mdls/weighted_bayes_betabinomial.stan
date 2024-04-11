@@ -94,7 +94,11 @@ generated quantities {
       log_lik[subj, n] =  beta_binomial_lpmf(second_rating_tr[n, subj] | (upper_bound - lower_bound), 1 + shape1[n], 1 + (shape2[n] - shape1[n]));
       }
   }
+  
   real group_log_lik_mean;
   group_log_lik_mean = mean(to_matrix(log_lik));
+
+  real group_log_lik_sum;
+  group_log_lik_sum = sum(to_matrix(log_lik));
 }
 
