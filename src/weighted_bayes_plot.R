@@ -58,7 +58,7 @@ xlim(0, 2) +
 theme_bw()
 
 # save the plot
-ggsave("fig/weighted_bayes_data.png", create.dir = TRUE)
+ggsave("fig/weighted_bayes_data.png", create.dir = TRUE, width = 10, height = 5)
 
 # make trace plots for data
 ggplot(draws_df, aes(.iteration, posterior_weight, group = .chain, color = .chain)) +
@@ -101,12 +101,14 @@ subject_summary <- subject_log_lik %>%
 
 # Extract the intercept for the vline from group-level log likelihood mean
 group_log_lik <- fit$summary(variables = "group_log_lik_mean")$mean
+group_log_lik_sum <- fit$summary(variables = "group_log_lik_sum")$mean
 
 # Plotting the densities for subject-level log-likelihoods
 ggplot(subject_log_lik, aes(x = log_lik, fill = as.factor(subject))) +
   geom_density(alpha = 0.5) +
   geom_vline(xintercept = group_log_lik, color = "blue", linetype = "dashed", linewidth = 1) +
   labs(title = "Subject-Level Log-Likelihoods with Group-Level Log-Likelihood",
+       subtitle = paste0("Mean of Subjects' Log-Likelihood: ", group_log_lik, "\nSum of Subjects' Log-Likelihood: ", group_log_lik_sum),
        caption = "Dashed vertical line: Mean of Subjects' Log-Likelihood",
        x = "Log-Likelihood",
        y = "Density",
@@ -116,7 +118,7 @@ ggplot(subject_log_lik, aes(x = log_lik, fill = as.factor(subject))) +
         plot.caption = element_text(color = "blue"))
 
 # save the plot
-ggsave("fig/weighted_bayes_data_loglik.png", create.dir = TRUE)
+ggsave("fig/weighted_bayes_data_loglik.png", create.dir = TRUE, width = 10, height = 5)
 
 
 png("fig/weighted_bayes_data_PSIS.png", width = 800, height = 400)
