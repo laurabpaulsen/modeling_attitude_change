@@ -88,5 +88,8 @@ generated quantities {
       log_lik[subj, n] =  beta_binomial_lpmf(second_rating_tr[n, subj] | (upper_bound - lower_bound), 1 + alpha[subj, n] * bias[subj], 1 + (beta[subj, n] - alpha[subj, n]) * bias[subj]);
     }
   }
+
+  real group_log_lik_mean;
+  group_log_lik_mean = mean(to_matrix(log_lik));
 }
 
