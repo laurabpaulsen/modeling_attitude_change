@@ -11,16 +11,9 @@ data {
 
 
 transformed data {
-  array[N_subj] vector[N] alpha;
-  array[N_subj] vector[N]  beta;
-  
   array[N, N_subj] int<lower = lower_bound-1, upper = upper_bound-1> second_rating_tr;
   
   for(subj in 1:N_subj){
-    // preparing vectors with the shape for the beta distribution for each participant
-    alpha[subj] = to_vector(first_rating[:, subj]) + to_vector(group_rating[:, subj]) - 2 * lower_bound; // the rating (how many...)
-    beta[subj] = rep_vector(2*(upper_bound - lower_bound), N);             // out of how many (trials)
-    
     // subtracting the lower bound from the second rating
     // as we want binomial(...) = 0 to correspond to the lowest rating option
     
@@ -101,5 +94,7 @@ generated quantities {
       log_lik[subj, n] =  beta_binomial_lpmf(second_rating_tr[n, subj] | (upper_bound - lower_bound), 1 + shape1[n], 1 + (shape2[n] - shape1[n]));
       }
   }
+  real group_log_lik_mean;
+  group_log_lik_mean = mean(to_matrix(log_lik));
 }
 
