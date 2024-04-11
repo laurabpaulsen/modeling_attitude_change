@@ -1,6 +1,6 @@
 # this script is used for plotting the results from running the simple_bayes_sim.R and simple_bayes_data.R scripts
 
-pacman::p_load(ggplot2, cmdstanr, bayesplot, posterior)
+pacman::p_load(ggplot2, cmdstanr, bayesplot, posterior, tidyverse)
 
 # plots for the simple bayes model on simulated data
 weight <- c(0.5, 1, 1.5)
@@ -67,6 +67,57 @@ ggplot(draws_df, aes(.iteration, posterior_weight, group = .chain, color = .chai
 
 # save the plot
 ggsave("fig/weighted_bayes_data_trace.png", create.dir = TRUE, width = 10, height = 5)
+
+
+
+subject_log_lik <- fit$draws(variables = "log_lik") %>%
+  as_draws_df() %>%
+  gather(key = "subject", value = "log_lik", -.draw) %>%
+  mutate(subject = as.factor(gsub("log_lik\\[", "", gsub("\\]", "", subject))))
+
+# separate
+subject_log_lik <- subject_log_lik %>%
+  separate(col = subject, into = c("subject", "trial"), sep = ",", convert = TRUE)
+
+# Get .chain and .iteration out
+subject_log_lik <- subject_log_lik %>% filter(!subject %in% c(".chain", ".iteration"))
+
+# Check summary stats
+summary(subject_log_lik$log_lik)
+
+
+# Inspecting for outliers
+outliers <- subject_log_lik %>%
+  filter(log_lik < -60000 | log_lik > 1000)
+
+# Find outlier
+subject_summary <- subject_log_lik %>%
+  group_by(subject) %>%
+  summarize(MaxLogLik = max(log_lik))
+
+# Identify the subject with the maximum log-likelihood
+#outlier_subject <- subject_summary %>%
+#  filter(MaxLogLik == max(MaxLogLik))
+
+# Extract the intercept for the vline from group-level log likelihood mean
+group_log_lik <- fit$summary(variables = "group_log_lik_mean")$mean
+
+# Plotting the densities for subject-level log-likelihoods
+ggplot(subject_log_lik, aes(x = log_lik, fill = as.factor(subject))) +
+  geom_density(alpha = 0.5) +
+  geom_vline(xintercept = group_log_lik, color = "blue", linetype = "dashed", linewidth = 1) +
+  labs(title = "Subject-Level Log-Likelihoods with Group-Level Log-Likelihood",
+       caption = "Dashed vertical line: Mean of Subjects' Log-Likelihood",
+       x = "Log-Likelihood",
+       y = "Density",
+       fill = "Subject") +
+  theme_bw() +
+  theme(plot.title = element_text(face = "bold"),
+        plot.caption = element_text(color = "blue"))
+
+# save the plot
+ggsave("fig/weighted_bayes_data_loglik.png", create.dir = TRUE)
+
 
 png("fig/weighted_bayes_data_PSIS.png", width = 800, height = 400)
 # print log likelihood
