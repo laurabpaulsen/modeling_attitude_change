@@ -40,6 +40,9 @@ transformed parameters {
   array[N_subj] real<lower=0> weight2;
   
   for (subj in 1:N_subj){
+    // Calculating the weight for each subject from a group-level mean, group-level sd and subject-level deviation
+    // the weight is then transformed to be between 0 and 1 using inv_logit
+    // and then multiplied by 2 to be range between 0 and 2
     weight1[subj] = inv_logit(mu_logweight1 + sd_logweight1 * logweight1[subj])*2; 
     weight2[subj] = 2 - weight1[subj];
   }
