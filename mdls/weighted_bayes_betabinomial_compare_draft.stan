@@ -92,6 +92,10 @@ generated quantities {
   posterior_weight_g1 = inv_logit(mu_logweight1_g1)*2;
   posterior_weight_g2 = inv_logit(mu_logweight1_g2)*2;
 
+  // the difference between the groups
+  real weight_diff;
+  weight_diff = posterior_weight_g1 - posterior_weight_g2;
+
   
   
   // for model comparison
