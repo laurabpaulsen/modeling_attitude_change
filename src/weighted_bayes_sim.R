@@ -56,7 +56,8 @@ for(weight1 in c(0.5, 1, 1.5)){
                 first_rating = first_rating_matrix,
                 group_rating = group_rating_matrix,
                 second_rating = second_rating_matrix
-    )
+    ),
+    parallel_chains = 4
 )
   
   # save the posterior

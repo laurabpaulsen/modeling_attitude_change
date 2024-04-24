@@ -42,7 +42,8 @@ fit <- simple_betabayes$sample(
   ),
   chains = 4,
   thin = 2,
-  iter_warmup = 1000
+  iter_warmup = 1000,
+  parallel_chains = 4
 )
 
 # save the posterior
