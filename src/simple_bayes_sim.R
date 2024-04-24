@@ -64,7 +64,8 @@ for(bias_mu in c(0.25, 0.5, 0.75)){
                 first_rating = first_rating_matrix,
                 group_rating = group_rating_matrix,
                 second_rating = second_rating_matrix
-    )
+    ),
+    parallel_chains = 4
   )
   # save the posterior
   fit$save_object(file = paste0("fits/simple_bayes_sim_", bias_mu, ".RData"))

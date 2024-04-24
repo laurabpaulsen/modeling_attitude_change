@@ -1,9 +1,9 @@
 # This script runs the simple bayes model on the data from 
 # Simonsen et al and saves the output
 
-pacman::p_load(cmdstanr, tidyverse)
+pacman::p_load(cmdstanr, tidyverse, loo)
 
-data <- read_csv("data/Simonsen_clean.csv")
+data <- read_csv("./data/Simonsen_clean.csv")
 
 # REMEMBER TO DELETE TO RUN ON ALL PARTICPANTS # data from fewer participants for testing 
 #data <- data |>
@@ -42,7 +42,8 @@ fit <- simple_betabayes$sample(
   ),
   chains = 4,
   thin = 2,
-  iter_warmup = 1000
+  iter_warmup = 1000,
+  parallel_chains = 4
 )
 
 # save the posterior
